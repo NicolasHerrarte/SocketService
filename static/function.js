@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const HOST = "127.0.0.1";
     const PORT = 65432;
 
-    const URL = "https://eighty-garlics-cheat.loca.lt"
+    const URL = ""
 
     let finalPOST_URL;
 
@@ -33,37 +33,33 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', e => {
         const mouseX = e.clientX;
         const mouseY = e.clientY;
+
         square.style.left = mouseX + 'px';
         square.style.top = mouseY + 'px';
 
         const now = Date.now();
         if (now - lastSent >= delay) {
             lastSent = now;
-            const body = `x=${mouseX}&y=${mouseY}`;
+            const body = `x=${mouseX}&y=${mouseY}&session_id=${getSessionId()}`;
             console.log("POST SEND")
+
+            let result;
+
             fetch(finalPOST_URL, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                     "Bypass-Tunnel-Reminder": "true"
                 },
+                credentials: "include",
                 body: body
-            }).catch(err => console.error("POST failed:", err));
-
-            let result;
-
-            fetch(finalGET_URL, {
-                method: "GET",
-                headers: {
-                    "Bypass-Tunnel-Reminder": "true"
-                },
-            })
-            .then(response => response.json())
+            }).then(response => response.json())
             .then(data => {
-                updateCubes(data);
-                console.log("GET result:", result);
+                updateCubes(data)
+                console.log(data)
             })
-            .catch(err => console.error("GET failed:", err));
+            .catch(err => console.error("POST failed:", err));
+
         }
     });
 });
@@ -89,4 +85,11 @@ function updateCubes(data) {
         // Update cube position
         cubes[id].style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
     }
+}
+
+function getSessionId() {
+    return document.cookie
+        .split("; ")
+        .find(row => row.startsWith("session_id="))
+        ?.split("=")[1] || "-1";
 }

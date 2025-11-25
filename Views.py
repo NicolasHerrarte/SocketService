@@ -43,14 +43,17 @@ class ServerViews:
         return response
 
     def update_user_position(self, request):
+        print("Update Position")
         response = HRES()
         if request.method == "POST":
-
-            cookies = request.strip_cookies()
-            if "session_id" in cookies.keys():
+            print(request.content)
+            session_id = request.content["session_id"]
+            if session_id != -1:
+                mouse_data = request.content
+                del mouse_data["session_id"]
                 with open('session_data.json', 'r') as file:
                     temp_session_data = json.load(file)
-                    temp_session_data[cookies["session_id"]] = request.content
+                    temp_session_data[str(session_id)] = mouse_data
                 with open('session_data.json', 'w') as file:
                     json.dump(temp_session_data, file)
 
@@ -58,6 +61,11 @@ class ServerViews:
                 print(temp_session_data)
 
                 response.add_all_header_options(Options.cors_options)
+
+                del temp_session_data[str(session_id)]
+                res_content = Content(temp_session_data, "DICT")
+                response.content = res_content
+                response.content_type = "application/json"
         else:
             response.status = 400
 
@@ -66,11 +74,12 @@ class ServerViews:
     def get_position_data(self, request):
         response = HRES()
         if request.method == "GET":
-            cookies = request.strip_cookies()
-            if "session_id" in cookies.keys():
+            print(request.content)
+            session_id = request.content["session_id"]
+            if session_id != -1:
                 with open('session_data.json', 'r') as file:
                     filtered_session_data = json.load(file)
-                    del filtered_session_data[cookies["session_id"]]
+                    del filtered_session_data[str(session_id)]
 
                 res_content = Content(filtered_session_data,"DICT")
                 response.content = res_content
